@@ -1,187 +1,394 @@
 """
 models.py
 ---------
-Define la jerarquía orientada a objetos del corpus bíblico:
+Define la jerarquia orientada a objetos del corpus biblico:
 
     Biblia -> Testamento -> Libro -> Capitulo -> Versiculo
 
-Cada clase es responsable únicamente de su propio nivel y delega en sus
-hijos cuando necesita agregar información (ej: contar versículos,
-concatenar texto, etc). Esto facilita el diagrama de clases pedido en
-los entregables.
+Cada clase usa __init__ explicito (sin dataclasses) para mantener el
+mismo estilo usado en otros laboratorios del curso. El Libro ademas
+guarda su genero (Law, Prophecy, Gospel, etc.), obtenido del archivo
+key_genre_english.csv del dataset.
 """
 
-from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional
 import pandas as pd
 
 
-@dataclass
 class Versiculo:
-    """Unidad mínima de análisis del corpus."""
-    libro: str
-    capitulo: int
-    numero: int
-    texto_original: str
-    texto_procesado: List[str] = field(default_factory=list)  # tokens tras preprocesamiento
+    """
+    Clase que representa un versiculo (unidad minima de analisis).
 
-    def __repr__(self) -> str:
-        return f"{self.libro} {self.capitulo}:{self.numero} - {self.texto_original[:40]}..."
+    Attributes:
+        libro (str): Nombre del libro al que pertenece.
+        capitulo (int): Numero de capitulo.
+        numero (int): Numero de versiculo dentro del capitulo.
+        texto_original (str): Texto del versiculo sin procesar.
+        texto_procesado (list[str]): Tokens del versiculo tras el pipeline
+            de preprocesamiento (vacio hasta que se procese).
+    """
 
-    @property
-    def texto_limpio(self) -> str:
-        """Texto procesado reconstruido como string (útil para TF-IDF)."""
+    def __init__(self, libro, capitulo, numero, texto_original):
+        self.libro = libro
+        self.capitulo = capitulo
+        self.numero = numero
+        self.texto_original = texto_original
+        self.texto_procesado = []
+
+    def set_texto_procesado(self, tokens):
+        """
+        Asigna los tokens resultantes del preprocesamiento.
+        Args:
+            tokens (list[str]): Lista de tokens ya procesados.
+        """
+        self.texto_procesado = tokens
+
+    def get_texto_limpio(self):
+        """
+        Reconstruye el texto procesado como string (util para TF-IDF).
+        Returns:
+            str: Texto procesado unido por espacios.
+        """
         return " ".join(self.texto_procesado)
 
+    def __str__(self):
+        return f"{self.libro} {self.capitulo}:{self.numero} - {self.texto_original[:40]}..."
 
-@dataclass
+
 class Capitulo:
-    numero: int
-    versiculos: List[Versiculo] = field(default_factory=list)
+    """
+    Clase que representa un capitulo de un libro.
 
-    def agregar_versiculo(self, versiculo: Versiculo) -> None:
+    Attributes:
+        numero (int): Numero del capitulo.
+        versiculos (list[Versiculo]): Versiculos que pertenecen al capitulo.
+    """
+
+    def __init__(self, numero):
+        self.numero = numero
+        self.versiculos = []
+
+    def agregar_versiculo(self, versiculo):
+        """
+        Agrega un versiculo al capitulo.
+        Args:
+            versiculo (Versiculo): Versiculo por agregar.
+        """
         self.versiculos.append(versiculo)
 
-    @property
-    def cantidad_versiculos(self) -> int:
+    def get_cantidad_versiculos(self):
+        """
+        Calcula la cantidad de versiculos del capitulo.
+        Returns:
+            int: Cantidad de versiculos.
+        """
         return len(self.versiculos)
 
-    @property
-    def texto_completo(self) -> str:
+    def get_texto_completo(self):
+        """
+        Concatena el texto original de todos los versiculos del capitulo.
+        Returns:
+            str: Texto completo del capitulo.
+        """
         return " ".join(v.texto_original for v in self.versiculos)
 
+    def __str__(self):
+        return f"Capitulo {self.numero} ({self.get_cantidad_versiculos()} versiculos)"
 
-@dataclass
+
 class Libro:
-    nombre: str
-    testamento: str  # "Antiguo" | "Nuevo"
-    capitulos: Dict[int, Capitulo] = field(default_factory=dict)
+    """
+    Clase que representa un libro de la Biblia.
 
-    def agregar_versiculo(self, versiculo: Versiculo) -> None:
+    Attributes:
+        nombre (str): Nombre del libro.
+        testamento (str): Etiqueta del testamento, ej. "OT" o "NT".
+        genero (str): Genero literario del libro, ej. "Law", "Gospel" (puede ser None
+            si el dataset cargado no incluye esta informacion).
+        capitulos (dict[int, Capitulo]): Capitulos del libro, indexados por numero.
+    """
+
+    def __init__(self, nombre, testamento, genero=None):
+        self.nombre = nombre
+        self.testamento = testamento
+        self.genero = genero
+        self.capitulos = {}
+
+    def set_genero(self, genero):
+        """
+        Asigna o actualiza el genero literario del libro.
+        Args:
+            genero (str): Nombre del genero (ej. "Law", "Gospel").
+        """
+        self.genero = genero
+
+    def get_genero(self):
+        """
+        Obtiene el genero literario del libro.
+        Returns:
+            str: Genero literario, o None si no fue asignado.
+        """
+        return self.genero
+
+    def agregar_versiculo(self, versiculo):
+        """
+        Agrega un versiculo al libro, creando el capitulo si no existe.
+        Args:
+            versiculo (Versiculo): Versiculo por agregar.
+        """
         if versiculo.capitulo not in self.capitulos:
-            self.capitulos[versiculo.capitulo] = Capitulo(numero=versiculo.capitulo)
+            self.capitulos[versiculo.capitulo] = Capitulo(versiculo.capitulo)
         self.capitulos[versiculo.capitulo].agregar_versiculo(versiculo)
 
-    @property
-    def versiculos(self) -> List[Versiculo]:
+    def get_versiculos(self):
+        """
+        Obtiene todos los versiculos del libro (de todos sus capitulos).
+        Returns:
+            list[Versiculo]: Lista plana de versiculos.
+        """
         out = []
         for cap in self.capitulos.values():
             out.extend(cap.versiculos)
         return out
 
-    @property
-    def cantidad_versiculos(self) -> int:
-        return len(self.versiculos)
+    def get_cantidad_versiculos(self):
+        """
+        Calcula la cantidad total de versiculos del libro.
+        Returns:
+            int: Cantidad de versiculos.
+        """
+        return len(self.get_versiculos())
 
-    @property
-    def cantidad_capitulos(self) -> int:
+    def get_cantidad_capitulos(self):
+        """
+        Calcula la cantidad de capitulos del libro.
+        Returns:
+            int: Cantidad de capitulos.
+        """
         return len(self.capitulos)
 
-    @property
-    def texto_completo(self) -> str:
-        return " ".join(v.texto_original for v in self.versiculos)
+    def get_texto_completo(self):
+        """
+        Concatena el texto original de todos los versiculos del libro.
+        Returns:
+            str: Texto completo del libro.
+        """
+        return " ".join(v.texto_original for v in self.get_versiculos())
+
+    def __str__(self):
+        return (f"{self.nombre} (Testamento: {self.testamento}, Genero: {self.genero}, "
+                f"{self.get_cantidad_versiculos()} versiculos)")
 
 
 class Testamento:
-    def __init__(self, nombre: str):
-        self.nombre = nombre  # "Antiguo" | "Nuevo"
-        self.libros: Dict[str, Libro] = {}
+    """
+    Clase que representa un testamento (ej. "OT" o "NT").
 
-    def agregar_libro(self, libro: Libro) -> None:
+    Attributes:
+        nombre (str): Etiqueta del testamento.
+        libros (dict[str, Libro]): Libros del testamento, indexados por nombre.
+    """
+
+    def __init__(self, nombre):
+        self.nombre = nombre
+        self.libros = {}
+
+    def agregar_libro(self, libro):
+        """
+        Agrega un libro al testamento.
+        Args:
+            libro (Libro): Libro por agregar.
+        """
         self.libros[libro.nombre] = libro
 
-    @property
-    def versiculos(self) -> List[Versiculo]:
+    def get_versiculos(self):
+        """
+        Obtiene todos los versiculos del testamento.
+        Returns:
+            list[Versiculo]: Lista plana de versiculos.
+        """
         out = []
         for libro in self.libros.values():
-            out.extend(libro.versiculos)
+            out.extend(libro.get_versiculos())
         return out
 
-    @property
-    def cantidad_versiculos(self) -> int:
-        return len(self.versiculos)
+    def get_cantidad_versiculos(self):
+        """
+        Calcula la cantidad total de versiculos del testamento.
+        Returns:
+            int: Cantidad de versiculos.
+        """
+        return len(self.get_versiculos())
+
+    def __str__(self):
+        return f"Testamento {self.nombre} ({len(self.libros)} libros)"
 
 
 class Biblia:
     """
-    Contenedor raíz del corpus. Se construye típicamente a partir de un
-    DataFrame de pandas con columnas mínimas:
-        ['libro', 'testamento', 'capitulo', 'versiculo', 'texto']
-    Ajusta los nombres de columna en `from_dataframe` según el dataset
-    de Kaggle que elijan (la estructura varía según la versión descargada).
+    Clase raiz que representa el corpus completo.
+
+    Los testamentos se crean dinamicamente segun las etiquetas que traiga
+    el dataset (ej. "OT"/"NT" en key_english.csv), en vez de asumir nombres
+    fijos como "Antiguo"/"Nuevo".
+
+    Attributes:
+        testamentos (dict[str, Testamento]): Testamentos encontrados en los datos,
+            indexados por su etiqueta original.
     """
 
     def __init__(self):
-        self.testamentos: Dict[str, Testamento] = {
-            "Antiguo": Testamento("Antiguo"),
-            "Nuevo": Testamento("Nuevo"),
-        }
+        self.testamentos = {}
 
-    def agregar_versiculo(self, versiculo: Versiculo, testamento: str, nombre_libro: str) -> None:
+    def agregar_versiculo(self, versiculo, testamento, nombre_libro, genero=None):
+        """
+        Agrega un versiculo a la Biblia, creando testamento/libro si no existen.
+        Args:
+            versiculo (Versiculo): Versiculo por agregar.
+            testamento (str): Etiqueta del testamento (ej. "OT", "NT").
+            nombre_libro (str): Nombre del libro al que pertenece.
+            genero (str, optional): Genero literario del libro (ej. "Law", "Gospel").
+                Si el libro ya existe y no tenia genero asignado, se actualiza.
+        """
+        if testamento not in self.testamentos:
+            self.testamentos[testamento] = Testamento(testamento)
         test_obj = self.testamentos[testamento]
+
         if nombre_libro not in test_obj.libros:
-            test_obj.agregar_libro(Libro(nombre=nombre_libro, testamento=testamento))
+            test_obj.agregar_libro(Libro(nombre_libro, testamento, genero))
+        elif genero is not None and test_obj.libros[nombre_libro].get_genero() is None:
+            test_obj.libros[nombre_libro].set_genero(genero)
+
         test_obj.libros[nombre_libro].agregar_versiculo(versiculo)
 
-    @classmethod
-    def from_dataframe(
-        cls,
-        df: pd.DataFrame,
-        col_libro: str = "libro",
-        col_testamento: str = "testamento",
-        col_capitulo: str = "capitulo",
-        col_versiculo: str = "versiculo",
-        col_texto: str = "texto",
-    ) -> "Biblia":
-        biblia = cls()
+    @staticmethod
+    def from_dataframe(df, col_libro="libro", col_testamento="testamento",
+                        col_capitulo="capitulo", col_versiculo="versiculo",
+                        col_texto="texto", col_genero="genero"):
+        """
+        Construye una Biblia a partir de un DataFrame de pandas que tiene el siguiente formato:
+        Index(['Verse ID', 'Book', 'Chapter', 'Verse', 'Text', 'Book Name',
+       'Testament (OT or NT)', 'Genre ID', 'Genre name']
+       (Los merges fueron hechos previamente)
+
+        Args:
+            df (pd.DataFrame): DataFrame con columnas de libro, testamento,
+                capitulo, versiculo, texto y (opcionalmente) genero.
+            col_libro (str): Nombre de la columna con el nombre del libro.
+            col_testamento (str): Nombre de la columna con el testamento.
+            col_capitulo (str): Nombre de la columna con el numero de capitulo.
+            col_versiculo (str): Nombre de la columna con el numero de versiculo.
+            col_texto (str): Nombre de la columna con el texto del versiculo.
+            col_genero (str): Nombre de la columna con el genero literario del libro.
+                Si no existe en el DataFrame, los libros quedan con genero=None.
+        Returns:
+            Biblia: Instancia construida con todos los versiculos del DataFrame.
+        """
+        biblia = Biblia()
+        tiene_genero = col_genero in df.columns
+
         for _, row in df.iterrows():
-            v = Versiculo(
+            versiculo = Versiculo(
                 libro=row[col_libro],
                 capitulo=int(row[col_capitulo]),
                 numero=int(row[col_versiculo]),
                 texto_original=str(row[col_texto]),
             )
-            biblia.agregar_versiculo(v, testamento=row[col_testamento], nombre_libro=row[col_libro])
+            genero = row[col_genero] if tiene_genero else None
+            biblia.agregar_versiculo(
+                versiculo,
+                testamento=row[col_testamento],
+                nombre_libro=row[col_libro],
+                genero=genero,
+            )
         return biblia
 
-    @property
-    def libros(self) -> List[Libro]:
+    def get_libros(self):
+        """
+        Obtiene todos los libros de la Biblia (todos los testamentos).
+        Returns:
+            list[Libro]: Lista de libros.
+        """
         out = []
-        for t in self.testamentos.values():
-            out.extend(t.libros.values())
+        for testamento in self.testamentos.values():
+            out.extend(testamento.libros.values())
         return out
 
-    @property
-    def versiculos(self) -> List[Versiculo]:
+    def get_versiculos(self):
+        """
+        Obtiene todos los versiculos de la Biblia.
+        Returns:
+            list[Versiculo]: Lista plana de versiculos.
+        """
         out = []
-        for libro in self.libros:
-            out.extend(libro.versiculos)
+        for libro in self.get_libros():
+            out.extend(libro.get_versiculos())
         return out
 
-    def to_dataframe(self) -> pd.DataFrame:
-        """Aplana el corpus completo a un DataFrame, útil para el resto del pipeline."""
+    def get_generos(self):
+        """
+        Obtiene la lista de generos literarios presentes en el corpus.
+        Returns:
+            list[str]: Generos unicos encontrados entre los libros (sin None).
+        """
+        generos = {libro.get_genero() for libro in self.get_libros()}
+        generos.discard(None)
+        return sorted(generos)
+
+    def to_dataframe(self):
+        """
+        Aplana el corpus completo a un DataFrame de pandas.
+        Returns:
+            pd.DataFrame: Una fila por versiculo, con metadatos en el formato:
+                Index(['testamento', 'libro', 'genero', 'capitulo', 'versiculo',
+                'texto_original', 'texto_procesado', 'texto_limpio'],
+                dtype='object')
+        """
         rows = []
-        for libro in self.libros:
-            for v in libro.versiculos:
+        for libro in self.get_libros():
+            for versiculo in libro.get_versiculos():
                 rows.append({
                     "testamento": libro.testamento,
                     "libro": libro.nombre,
-                    "capitulo": v.capitulo,
-                    "versiculo": v.numero,
-                    "texto_original": v.texto_original,
-                    "texto_procesado": v.texto_procesado,
-                    "texto_limpio": v.texto_limpio,
+                    "genero": libro.get_genero(),
+                    "capitulo": versiculo.capitulo,
+                    "versiculo": versiculo.numero,
+                    "texto_original": versiculo.texto_original,
+                    "texto_procesado": versiculo.texto_procesado,
+                    "texto_limpio": versiculo.get_texto_limpio(),
                 })
         return pd.DataFrame(rows)
 
-    def resumen(self) -> pd.DataFrame:
-        """Cantidad de libros, capítulos y versículos por testamento (chequeo rápido)."""
+    def get_resumen(self):
+        """
+        Calcula un resumen de cantidad de libros y versiculos por testamento.
+        Returns:
+            pd.DataFrame: Una fila por testamento con n_libros y n_versiculos.
+        """
         rows = []
-        for nombre, t in self.testamentos.items():
+        for nombre, testamento in self.testamentos.items():
             rows.append({
                 "testamento": nombre,
-                "n_libros": len(t.libros),
-                "n_versiculos": t.cantidad_versiculos,
+                "n_libros": len(testamento.libros),
+                "n_versiculos": testamento.get_cantidad_versiculos(),
             })
         return pd.DataFrame(rows)
+
+    def get_resumen_generos(self):
+        """
+        Calcula un resumen de cantidad de libros y versiculos por genero literario.
+        Returns:
+            pd.DataFrame: Una fila por genero con n_libros y n_versiculos.
+        """
+        rows = []
+        for genero in self.get_generos():
+            libros_genero = [l for l in self.get_libros() if l.get_genero() == genero]
+            n_versiculos = sum(l.get_cantidad_versiculos() for l in libros_genero)
+            rows.append({
+                "genero": genero,
+                "n_libros": len(libros_genero),
+                "n_versiculos": n_versiculos,
+            })
+        return pd.DataFrame(rows)
+
+    def __str__(self):
+        return f"Biblia ({len(self.get_libros())} libros, {len(self.get_versiculos())} versiculos)"
