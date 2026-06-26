@@ -1,14 +1,3 @@
-"""
-tfidf.py
---------
-Implementación propia de TF-IDF y similitud del coseno (requerimiento
-explícito del enunciado: NO se puede usar sklearn/TfidfVectorizer ni
-funciones de similitud ya implementadas para esta parte).
-
-Se usa numpy solo para álgebra básica (vectores/matrices), no para el
-cálculo de TF-IDF en sí.
-"""
-
 import math
 from collections import Counter
 from typing import List, Dict
@@ -19,8 +8,7 @@ class TFIDFVectorizer:
     """
     TF  (term frequency):       tf(t, d) = count(t in d) / len(d)
     IDF (inverse doc frequency): idf(t)   = log( (1 + N) / (1 + df(t)) ) + 1
-        (suavizado +1 estilo sklearn para evitar división por cero;
-         se documenta la elección para la sección de justificación)
+        (suavizado +1 estilo sklearn para evitar división por cero)
     TF-IDF(t, d) = tf(t, d) * idf(t)
     """
 
@@ -32,13 +20,12 @@ class TFIDFVectorizer:
     def fit(self, documentos_tokenizados: List[List[str]]) -> "TFIDFVectorizer":
         self.n_docs = len(documentos_tokenizados)
 
-        # vocabulario ordenado alfabéticamente -> índices estables
         vocab_set = set()
         for tokens in documentos_tokenizados:
             vocab_set.update(tokens)
+
         self.vocabulario = {palabra: i for i, palabra in enumerate(sorted(vocab_set))}
 
-        # document frequency: en cuántos documentos aparece cada palabra
         df = np.zeros(len(self.vocabulario))
         for tokens in documentos_tokenizados:
             presentes = set(tokens)
@@ -50,6 +37,7 @@ class TFIDFVectorizer:
 
     def transform(self, documentos_tokenizados: List[List[str]]) -> np.ndarray:
         """Devuelve matriz (n_documentos x n_vocabulario) con pesos TF-IDF."""
+        
         if self.idf is None:
             raise RuntimeError("Llama a fit() antes de transform().")
 
