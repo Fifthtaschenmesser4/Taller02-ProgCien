@@ -1,20 +1,7 @@
-"""
-preprocessing.py
-----------------
-Pipeline de preprocesamiento textual encapsulado en una clase para que
-sea fácil justificar/activar-desactivar etapas (pedido explícito en el
-enunciado: "justificar las decisiones tomadas").
-"""
-
 import re
 import string
 from collections import Counter
 from typing import List, Dict, Iterable, Optional
-
-
-# Lista mínima de stopwords en español. Se recomienda complementar con
-# nltk.corpus.stopwords('spanish') o spacy si lo tienen disponible;
-# se deja una lista base para no depender de descargas externas.
 
 class TextPreprocessor:
     """
@@ -31,7 +18,7 @@ class TextPreprocessor:
         lowercase: bool = True,
         remove_punctuation: bool = True,
         remove_numbers: bool = True,
-        remove_stopwords: bool = True,
+        remove_stopwords: bool = True
     ):
         self.stopwords = set(stopwords)
         self.min_token_len = min_token_len
@@ -50,14 +37,14 @@ class TextPreprocessor:
     def strip_punctuation(self, text: str) -> str:
         if not self.remove_punctuation:
             return text
-        # incluye signos propios de español (¿¡) además de string.punctuation
+        
         punct = string.punctuation + "¿¡“”‘’—–"
         return text.translate(str.maketrans(punct, " " * len(punct)))
 
     def strip_special_and_numbers(self, text: str) -> str:
         if not self.remove_numbers:
             return text
-        # conserva letras (incl. acentos/ñ) y espacios
+        
         return re.sub(r"[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]", " ", text)
 
     def tokenize(self, text: str) -> List[str]:
@@ -66,12 +53,12 @@ class TextPreprocessor:
     def filter_stopwords(self, tokens: List[str]) -> List[str]:
         if not self.remove_stopwords:
             return tokens
+        
         return [t for t in tokens if t not in self.stopwords]
 
     def filter_short_tokens(self, tokens: List[str]) -> List[str]:
-        return [t for t in tokens if len(t) >= self.min_token_len]
 
-    # ---- pipeline completo ----
+        return [t for t in tokens if len(t) >= self.min_token_len]
 
     def process(self, text: str) -> List[str]:
         """Aplica todas las etapas en orden y devuelve la lista de tokens."""

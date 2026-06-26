@@ -100,15 +100,15 @@ def main():
 
     df["texto_procesado"] = preprocessor.process_corpus(df["texto_original"].tolist())
 
-    # print("Top 20 palabras más frecuentes:", preprocessor.palabras_mas_frecuentes(20))
+    print("Top 20 palabras más frecuentes:", preprocessor.palabras_mas_frecuentes(20))
 
     # 3. TF-IDF a nivel de versículo ---------------------------------------------
-    # vectorizer = TFIDFVectorizer()
-    # matriz_tfidf_versiculos = vectorizer.fit_transform(df["texto_procesado"].tolist())
+    vectorizer = TFIDFVectorizer()
+    matriz_tfidf_versiculos = vectorizer.fit_transform(df["texto_procesado"].tolist())
 
     # 4. Visualizaciones (3.2) ----------------------------------------------------
-    # viz.plot_longitud_versiculos(df)
-    # viz.plot_versiculos_por_libro(df)
+    #viz.plot_longitud_versiculos(df)
+    #viz.plot_versiculos_por_libro(df)
 
     # heatmap de similitud ENTRE LIBROS (obligatorio) -> agregamos texto por libro
     # textos_por_libro = df.groupby("libro")["texto_procesado"].sum()  # concatena listas de tokens
