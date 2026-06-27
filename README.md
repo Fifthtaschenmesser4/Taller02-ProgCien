@@ -1,4 +1,4 @@
-<a href=bibliabanner><img src=https://raw.githubusercontent.com/Fifthtaschenmesser4/Taller02-ProgCien/main/imgs/bible_banner.png align="center" alt="bible" ></a>
+<a href="bibliabanner"><img src="./imgs/bible_banner.png" align="center" alt="bible" ></a>
 
 <h1 align="center"> Taller 02 - Programación Científica </h1>
 
