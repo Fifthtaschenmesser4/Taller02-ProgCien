@@ -1,88 +1,84 @@
 """
 sentiment.py
 ------------
-Análisis de sentimiento por versículo y agregación por capítulo/libro.
+Analizador de sentimiento por versículo y agregacion por capitulo/libro.
 
-Usa un enfoque basado en léxico (ej: librería `pysentimiento` o un
-diccionario propio) ya que herramientas como TextBlob/VADER están
-entrenadas en inglés y el corpus probablemente esté en español.
-
-Si trabajan en inglés con el dataset de Kaggle, pueden cambiar
-`AnalizadorLexico` por TextBlob directamente (más simple).
-Se deja una interfaz `SentimentAnalyzer` para que sea intercambiable.
+El analizador está compuesto por 2 clases,
+una funciona de interfaz (SentimentAnalyzer) que actua sobre TextBlobSentimentAnalyzer,
+clase que implementa la libreria TextBlob que frece una API sencilla para abordar 
+tareas habituales de PLN, como el etiquetado de partes de la palabra, extracción de sintagmas nominales, análisis de sentimiento, 
+clasificación y mucho más.
+https://textblob.readthedocs.io/en/dev/
 """
 
-from typing import List, Dict
 import pandas as pd
 
 
 class SentimentAnalyzer:
     """
-    Interfaz mínima: cualquier analizador debe implementar `score(texto) -> float`
-    en rango aproximado [-1, 1] (negativo a positivo).
+    Clase tipo interfaz, cualquier analizador que se implemente a futuro
+    (ej: uno en español) debe implementar el metodo score(texto), que
+    retorna un valor entre -1 y 1 (negativo o positivo).
     """
 
-    def score(self, texto: str) -> float:
+    def score(self, texto):
+        """
+        Calcula el score de sentimiento de un texto.
+        Args:
+            texto (str): texto a analizar (ej. un versiculo).
+        Returns:
+            float: puntaje de sentimiento (entre -1 y 1).
+        """
         raise NotImplementedError
 
-
-class LexiconSentimentAnalyzer(SentimentAnalyzer):
-    """
-    Analizador simple basado en diccionario de palabras positivas/negativas.
-    Pensado como fallback si no quieren depender de librerías externas o si
-    el corpus está en español y las librerías en inglés no aplican bien.
-    Se recomienda ampliar las listas o reemplazar por un lexicón en español
-    como el de SEL (Spanish Emotion Lexicon) si quieren más precisión.
-    """
-
-    POSITIVAS = {
-        "amor", "paz", "alegria", "alegría", "bendicion", "bendición", "gracia",
-        "fe", "esperanza", "gloria", "salvacion", "salvación", "bueno", "buena",
-        "bendito", "bendita", "gozo", "misericordia", "luz", "vida", "justicia",
-        "victoria", "fiel", "fidelidad", "consuelo", "verdad", "santo", "santa",
-    }
-    NEGATIVAS = {
-        "muerte", "pecado", "maldicion", "maldición", "ira", "guerra", "dolor",
-        "mal", "maldad", "destruccion", "destrucción", "castigo", "miedo",
-        "temor", "llanto", "lamento", "oscuridad", "enemigo", "violencia",
-        "sangre", "venganza", "juicio", "condenacion", "condenación", "infierno",
-    }
-
-    def score(self, texto: str) -> float:
-        tokens = texto.lower().split()
-        if not tokens:
-            return 0.0
-        pos = sum(1 for t in tokens if t in self.POSITIVAS)
-        neg = sum(1 for t in tokens if t in self.NEGATIVAS)
-        total = pos + neg
-        if total == 0:
-            return 0.0
-        return (pos - neg) / total
-
-
 class TextBlobSentimentAnalyzer(SentimentAnalyzer):
-    """Alternativa usando TextBlob (recomendada si el corpus está en inglés)."""
+    """
+    Clase que analiza sentimiento de textos, usando TextBlob.
+
+    Attributes:
+        text_blob_class (type): referencia la clase TextBlob, importada en el init.
+    """
 
     def __init__(self):
-        from textblob import TextBlob  # import local para no forzar la dependencia si no se usa
-        self._TextBlob = TextBlob
+        from textblob import TextBlob
+        self.text_blob_class = TextBlob
 
-    def score(self, texto: str) -> float:
-        return self._TextBlob(texto).sentiment.polarity
+    def score(self, texto):
+        """
+        Calcula el score de sentimiento de un texto.
+        Args:
+            texto (str): texto a analizar (ej. un versiculo).
+        Returns:
+            float: puntaje de sentimiento (entre -1 y 1).
+        """
+        return self.text_blob_class(texto).sentiment.polarity
 
 
-def calcular_sentimiento_corpus(
-    df: pd.DataFrame,
-    analyzer: SentimentAnalyzer,
-    columna_texto: str = "texto_original",
-) -> pd.DataFrame:
-    """Agrega una columna 'sentimiento' al DataFrame de versículos."""
+def calcular_sentimiento_corpus(df, analyzer, columna_texto="texto_original"):
+    """
+    Calcula el puntaje de sentimiento para cada texto de un Pandas.DataFrame y agrega los scores
+    en una columna 'sentimiento'.
+    Args:
+        df (pd.DataFrame): DataFrame de versiculos.
+        analyzer (SentimentAnalyzer): Analizador.
+        zcolumna_texto (str): columna que contiene el texto a analizar. Por default= "texto_original"
+    Returns:
+        pd.DataFrame: Copia de df con la columna 'sentimiento' agregada.
+    """
     df = df.copy()
     df["sentimiento"] = df[columna_texto].apply(analyzer.score)
     return df
 
 
-def agregar_por_libro(df: pd.DataFrame) -> pd.DataFrame:
+def agregar_por_libro(df):
+    """
+    Agrupa los scores de sentimiento por libro y usa funciones de agregación sobre sus versículos.
+    Args:
+        df (pd.DataFrame): DataFrame con columnas 'libro' y 'sentimiento'.
+    Returns:
+        pd.DataFrame: una fila por libro, con mean, std, min, max y count de sentimiento, 
+        ordenado de menor a mayor sentimiento promedio.
+    """
     return (
         df.groupby("libro")["sentimiento"]
         .agg(["mean", "std", "min", "max", "count"])
@@ -91,7 +87,14 @@ def agregar_por_libro(df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def agregar_por_capitulo(df: pd.DataFrame) -> pd.DataFrame:
+def agregar_por_capitulo(df):
+    """
+    Agrega los puntajes de sentimiento por libro y capitulo.
+    Args:
+        df (pd.DataFrame): DataFrame con columnas 'libro', 'capitulo' y 'sentimiento'.
+    Returns:
+        pd.DataFrame: una fila por (libro, capitulo) con el sentimiento promedio.
+    """
     return (
         df.groupby(["libro", "capitulo"])["sentimiento"]
         .mean()

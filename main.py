@@ -15,6 +15,7 @@ from pathlib import Path
 import json
 
 from src.models import Biblia
+from src.data_loader import cargar_dataset
 from src.preprocessing import TextPreprocessor
 from src.tfidf import TFIDFVectorizer, cosine_similarity_matrix
 from src.search_engine import SemanticSearchEngine
@@ -76,7 +77,6 @@ def main():
     path_genre=dir_dataset/"key_genre_english.csv"
     path_stopwords = dir_dataset/"stopwords.json"
 
-    #1. CARGAR DATOS EN Biblia
     df_raw = cargar_dataset(path_bible, path_key, path_genre)
     
     biblia = Biblia.from_dataframe(
@@ -127,24 +127,24 @@ def main():
     # print(motor.buscar("amor y fe", k=5))
 
     # 7. Clasificador de versículos (3.5) -------------------------------------------
-    # clasificador = VerseClassifier(modelo="logistic")
-    # clasificador.entrenar(matriz_tfidf_versiculos, df["libro"])
-    # resultados_clf = clasificador.evaluar()
-    # print("Accuracy:", resultados_clf["accuracy"])
-    # viz.plot_matriz_confusion(resultados_clf["matriz_confusion"], resultados_clf["clases"])
+    clasificador = VerseClassifier(modelo="logistic")
+    clasificador.entrenar(matriz_tfidf_versiculos, df["libro"])
+    resultados_clf = clasificador.evaluar()
+    print("Accuracy:", resultados_clf["accuracy"])
+    viz.plot_matriz_confusion(resultados_clf["matriz_confusion"], resultados_clf["clases"])
 
     # 8. Generador de texto con n-gramas (3.6) --------------------------------------
-    # generados = comparar_modelos(df["texto_procesado"].tolist(), ns=(1, 2, 3, 4))
-    # for n, texto in generados.items():
-    #     print(f"n={n}: {texto}")
+    generados = comparar_modelos(df["texto_procesado"].tolist(), ns=(1, 2, 3, 4))
+    for n, texto in generados.items():
+        print(f"n={n}: {texto}")
 
     # 9. Análisis de sentimiento (3.7) ------------------------------------------------
-    # analizador = LexiconSentimentAnalyzer()
-    # df = calcular_sentimiento_corpus(df, analizador)
-    # sentimiento_por_libro = agregar_por_libro(df)
-    # viz.plot_sentimiento_por_libro(sentimiento_por_libro)
+    analizador = LexiconSentimentAnalyzer()
+    df = calcular_sentimiento_corpus(df, analizador)
+    sentimiento_por_libro = agregar_por_libro(df)
+    viz.plot_sentimiento_por_libro(sentimiento_por_libro)
 
-    # print("Pipeline completo ejecutado correctamente.")
+    print("Pipeline completo ejecutado correctamente.")
 
 
 if __name__ == "__main__":

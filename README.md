@@ -1,42 +1,55 @@
-# Biblical Text Mining — Laboratorio 2
+<a href="bibliabanner"><img src="./imgs/bible_banner.png" align="center" alt="bible" ></a>
 
-Sistema de análisis computacional de texto sobre el corpus bíblico:
-preprocesamiento, TF-IDF (implementado desde cero), motor de búsqueda
+<h1 align="center"> Taller 02 - Programación Científica </h1>
+
+<p align = center>
+<a href = "https://www.ucn.cl"><img alt="Static Badge" src="https://img.shields.io/badge/Universidad_Católica_del_Norte-orange"></a>
+<a href = "https://eic.ucn.cl"> <img alt="Static Badge" src="https://img.shields.io/badge/Escuela_de_Ingeniería_Coquimbo-blue"></a>
+</p>
+
+## Biblical Text Mining — Laboratorio 2
+
+El presente repositorio consiste en la implementación de un programa capaz de realizar análisis computacional de texto sobre el corpus bíblico, desarrollando labores de preprocesamiento, TF-IDF (implementado desde cero), motor de búsqueda
 semántico, clasificador de versículos, generador de texto con n-gramas
 y análisis de sentimiento.
+Los datos para este taller fueron extraídos de https://www.kaggle.com/datasets/oswinrh/bible en la versión ASV (American Standard Version).
 
 ## Estructura del proyecto
 
 ```
 biblical_text_mining/
-├── data/                     # CSV del dataset (no versionado, ver abajo)
-├── notebooks/                # exploración y generación de figuras del informe
+├── data/                     
+├── notebooks/            
 ├── src/
 │   ├── __init__.py
-│   ├── models.py             # Biblia, Testamento, Libro, Capitulo, Versiculo (OOP)
-│   ├── preprocessing.py      # TextPreprocessor: pipeline de limpieza de texto
-│   ├── tfidf.py               # TFIDFVectorizer + cosine_similarity (implementación propia)
-│   ├── search_engine.py      # SemanticSearchEngine: buscador por similitud
-│   ├── classifier.py         # VerseClassifier: predice libro a partir de un versículo
-│   ├── ngram_model.py        # NGramModel: generador de texto (unigram/bigram/trigram/n)
-│   ├── sentiment.py          # Análisis de sentimiento por versículo/capítulo/libro
-│   └── visualization.py      # Funciones de gráficos (heatmap, PCA, wordcloud, etc.)
-├── main.py                   # pipeline end-to-end
+│   ├── models.py 
+|   ├── dataloader.py            
+│   ├── preprocessing.py      
+│   ├── tfidf.py              
+│   ├── search_engine.py     
+│   ├── classifier.py        
+│   ├── ngram_model.py        
+│   ├── sentiment.py          
+│   └── visualization.py      
+├── main.py                
 ├── requirements.txt
 └── README.md
 ```
 
-## Dataset
-
-Descargar desde https://www.kaggle.com/datasets/oswinrh/bible (o una versión
-en español) y guardar el CSV en `data/`. **Ajustar `cargar_dataset()` en
-`main.py`** según las columnas reales del archivo descargado — varían
-entre versiones del dataset.
-
 ## Instalación
 
+## Instalación
+1. Clonar el repositorio y entrar en la carpeta:
+``` bash
+git clone https://github.com/Fifthtaschenmesser4/Taller02-ProgCien
+```
+2. Entrar en la raíz del proyecto:
 ```bash
-pip install -r requirements.txt
+cd Taller01-ProgCient
+```
+3. Descargar los requerimientos con el archivo __requirements.txt__:
+``` bash
+pip install -q -r requirements.txt
 python main.py
 ```
 
@@ -120,23 +133,32 @@ classDiagram
     }
     class LexiconSentimentAnalyzer
     class TextBlobSentimentAnalyzer
-    SentimentAnalyzer <|-- LexiconSentimentAnalyzer
     SentimentAnalyzer <|-- TextBlobSentimentAnalyzer
 ```
 
-## División de trabajo sugerida (equipo de 3)
-
-- **Persona A:** `models.py`, `preprocessing.py`, `tfidf.py` (base que bloquea al resto)
-- **Persona B:** `search_engine.py`, `visualization.py` (heatmap + PCA)
-- **Persona C:** `classifier.py`, `ngram_model.py`, `sentiment.py`
-
-## Notas de diseño
-
-- TF-IDF y similitud de coseno están implementados desde cero en `tfidf.py`
-  (sin usar `sklearn.feature_extraction.text.TfidfVectorizer` ni
-  `sklearn.metrics.pairwise.cosine_similarity`), según lo exigido en el
-  enunciado. `sklearn` sí se usa para PCA y para el clasificador, donde
-  está permitido.
-- `LexiconSentimentAnalyzer` es un baseline simple en español. Si el
-  corpus elegido está en inglés, usar `TextBlobSentimentAnalyzer` en su
-  lugar (ver `sentiment.py`).
+## Integrantes
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/martindroguett">
+        <img src="https://github.com/martindroguett.png" width="100px;" alt="Martín Droguett" style="border-radius:50%"/>
+        <br />
+        <sub><b>Martín Droguett Robledo</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/Fifthtaschenmesser4">
+        <img src="https://github.com/Fifthtaschenmesser4.png" width="100px;" alt="Francisco Romero" style="border-radius:50%"/>
+        <br />
+        <sub><b>Francisco Romero Opazo</b></sub>
+      </a>
+    </td>
+        <td align="center">
+      <a href="https://github.com/amelievalderrama-oss">
+        <img src="https://github.com/amelievalderrama-oss.png" width="100px;" alt="Amelie Valderrama" style="border-radius:50%"/>
+        <br />
+        <sub><b>Amelie Valderrama</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
