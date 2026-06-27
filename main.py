@@ -70,12 +70,13 @@ def cargar_dataset(path_bible: str,path_key: str,path_genre:str):
 
 
 def main():
-    # Rutas a los archivos del taller
-    dir_dataset = Path().resolve() / "data" 
-    path_bible= dir_dataset/"t_asv.csv"
-    path_key= dir_dataset/"key_english.csv"
-    path_genre=dir_dataset/"key_genre_english.csv"
-    path_stopwords = dir_dataset/"stopwords.json"
+    # Rutas a los archivos del taller basadas en la ubicación de este script
+    script_root = Path(__file__).resolve().parent
+    dir_dataset = script_root / "data"
+    path_bible = dir_dataset / "t_asv.csv"
+    path_key = dir_dataset / "key_english.csv"
+    path_genre = dir_dataset / "key_genre_english.csv"
+    path_stopwords = dir_dataset / "stopwords.json"
 
     df_raw = cargar_dataset(path_bible, path_key, path_genre)
     
@@ -111,15 +112,15 @@ def main():
     #viz.plot_versiculos_por_libro(df)
 
     # heatmap de similitud ENTRE LIBROS (obligatorio) -> agregamos texto por libro
-    # textos_por_libro = df.groupby("libro")["texto_procesado"].sum()  # concatena listas de tokens
-    #vectorizer_libros = TFIDFVectorizer()
-    # matriz_tfidf_libros = vectorizer_libros.fit_transform(textos_por_libro.tolist())
+    textos_por_libro = df.groupby("libro")["texto_procesado"].sum()  # concatena listas de tokens
+    vectorizer_libros = TFIDFVectorizer()
+    matriz_tfidf_libros = vectorizer_libros.fit_transform(textos_por_libro.tolist())
     # matriz_similitud_libros = cosine_similarity_matrix(matriz_tfidf_libros)
     # viz.plot_heatmap_similitud_libros(matriz_similitud_libros, textos_por_libro.index.tolist())
 
     # 5. PCA de versículos (3.3) ---------------------------------------------------
-    # viz.plot_pca_versiculos(matriz_tfidf_versiculos, df["testamento"], titulo="Versículos por testamento")
-    # viz.plot_pca_versiculos(matriz_tfidf_versiculos, df["libro"], titulo="Versículos por libro")
+    viz.plot_pca_versiculos(matriz_tfidf_versiculos, df["testamento"], titulo="Versículos por testamento")
+    viz.plot_pca_versiculos(matriz_tfidf_versiculos, df["libro"], titulo="Versículos por libro")
 
     # 6. Motor de búsqueda semántico (3.4) -----------------------------------------
     # motor = SemanticSearchEngine(preprocessor, TFIDFVectorizer())
@@ -145,6 +146,7 @@ def main():
     viz.plot_sentimiento_por_libro(sentimiento_por_libro)
 
     print("Pipeline completo ejecutado correctamente.")
+    return df
 
 
 if __name__ == "__main__":

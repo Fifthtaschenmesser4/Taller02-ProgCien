@@ -6,9 +6,17 @@ import numpy as np
 
 class TFIDFVectorizer:
     """
-    TF  (term frequency):       tf(t, d) = count(t in d) / len(d)
-    IDF (inverse doc frequency): idf(t)   = log( (1 + N) / (1 + df(t)) ) + 1
-        (suavizado +1 estilo sklearn para evitar división por cero)
+    Clase que implementa la técnica de procesamiento de lenguaje natural TF-IDF.
+    Mide la importancia de una palabra en un documento (libro o versículo)
+    a lo largo de una colección.
+
+    Se aplican las siguientes fórmulas:
+
+    TF  (term frequency o frecuencia de término): tf(t, d) = count(t in d) / len(d)
+
+    IDF (inverse doc frequency o frecuencia inversa de documento):
+    idf(t) = log((1 + N) / (1 + df(t))) + 1
+
     TF-IDF(t, d) = tf(t, d) * idf(t)
     """
 
@@ -25,6 +33,14 @@ class TFIDFVectorizer:
         self.normalizar = normalizar
 
     def fit(self, documentos_tokenizados: List[List[str]]) -> "TFIDFVectorizer":
+        """
+        Prepara los documentos ya tokenizados en para convertirlos en vectores TF-IDF.
+        Además, calcula los pesos IDF.
+
+        @param documentos_tokenizados: Lista de documentos representados como listas de tokens.
+        @return: La instancia del vectorizador.
+        """
+
         self.n_docs = len(documentos_tokenizados)
 
         vocab_set = set()
@@ -41,9 +57,14 @@ class TFIDFVectorizer:
 
         self.idf = np.log((1 + self.n_docs) / (1 + df)) + 1
         return self
-
+    
     def transform(self, documentos_tokenizados: List[List[str]]) -> np.ndarray:
-        """Devuelve matriz (n_documentos x n_vocabulario) con pesos TF-IDF."""
+        """
+        Convierte los documentos en una matriz TF-IDF.
+
+        @param documentos_tokenizados: Lista de documentos representados como listas de tokens.
+        @return: Matriz Numpy de la forma (n_documentos, n_vocabulario) con los pesos TF-IDF.
+        """
         
         if self.idf is None:
             raise RuntimeError("Llama a fit() antes de transform().")
@@ -68,20 +89,36 @@ class TFIDFVectorizer:
         return matriz
 
     def fit_transform(self, documentos_tokenizados: List[List[str]]) -> np.ndarray:
+        """
+        Ajusta el modelo y devuelve la matriz TF-IDF resultante.
+
+        @param documentos_tokenizados: Lista de documentos representados como listas de tokens.
+        @return: Matriz Numpy con los pesos TF-IDF calculados.
+        """
+
         self.fit(documentos_tokenizados)
         return self.transform(documentos_tokenizados)
 
     def vectorizar_texto_nuevo(self, tokens: List[str]) -> np.ndarray:
-        """Vectoriza un único texto nuevo (ej: query del buscador semántico)
-        usando el vocabulario/idf ya ajustados, sin reentrenar."""
+        """
+        Vectoriza un único texto nuevo usando el vocabulario y el IDF ya entrenados.
+
+        @param tokens: Lista de tokens del texto nuevo.
+        @return: Vector Numpy con los pesos TF-IDF del texto nuevo.
+        """
+
         return self.transform([tokens])[0]
 
 
 def cosine_similarity(vec_a: np.ndarray, vec_b: np.ndarray) -> float:
     """
-    similitud(A, B) = (A . B) / (||A|| * ||B||)
-    Implementación propia, sin sklearn.metrics.pairwise.
+    Calcula la similitud del coseno entre dos vectores.
+
+    @param vec_a: Primer vector.
+    @param vec_b: Segundo vector.
+    @return: Decimal entre 0 y 1 que indica qué tan similares son los vectores.
     """
+
     dot = np.dot(vec_a, vec_b)
     norm_a = math.sqrt(np.dot(vec_a, vec_a))
     norm_b = math.sqrt(np.dot(vec_b, vec_b))
@@ -92,11 +129,13 @@ def cosine_similarity(vec_a: np.ndarray, vec_b: np.ndarray) -> float:
 
 def cosine_similarity_matrix(matriz: np.ndarray) -> np.ndarray:
     """
-    Similitud de coseno entre todas las filas de una matriz (NxN).
-    Útil para el heatmap de similitud entre libros pedido en 3.2.
-    Vectorizado para que sea rápido sobre corpus grandes.
+    Calcula la similitud de coseno entre todas las filas de una matriz.
+
+    @param matriz: Matriz cuyas filas representan vectores de características.
+    @return: Matriz Numpy cuadrada con las similitudes de coseno entre cada par de filas.
     """
+
     normas = np.linalg.norm(matriz, axis=1)
     normas[normas == 0] = 1e-10  # evita división por cero
     matriz_normalizada = matriz / normas[:, np.newaxis]
-    return matriz_normalizada @ matriz_normalizada.T
+    return np.dot(matriz_normalizada, matriz_normalizada.T)
