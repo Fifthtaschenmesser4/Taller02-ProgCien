@@ -135,3 +135,30 @@ classDiagram
     class TextBlobSentimentAnalyzer
     SentimentAnalyzer <|-- TextBlobSentimentAnalyzer
 ```
+
+## Integrantes
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/martindroguett">
+        <img src="https://github.com/martindroguett.png" width="100px;" alt="Martín Droguett" style="border-radius:50%"/>
+        <br />
+        <sub><b>Martín Droguett Robledo</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/Fifthtaschenmesser4">
+        <img src="https://github.com/Fifthtaschenmesser4.png" width="100px;" alt="Francisco Romero" style="border-radius:50%"/>
+        <br />
+        <sub><b>Francisco Romero Opazo</b></sub>
+      </a>
+    </td>
+        <td align="center">
+      <a href="https://github.com/amelievalderrama-oss">
+        <img src="https://github.com/amelievalderrama-oss.png" width="100px;" alt="Amelie Valderrama" style="border-radius:50%"/>
+        <br />
+        <sub><b>Amelie Valderrama</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
