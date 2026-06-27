@@ -24,10 +24,17 @@ class TFIDFVectorizer:
     TF-IDF(t, d) = tf(t, d) * idf(t)
     """
 
-    def __init__(self):
+    def __init__(self,normalizar=True):
+        """
+        Args:
+        normalizar (bool): si es True, cada fila de la matriz TFIDF resultante
+        se normaliza a norma L2 = 1 (vector unitario). Esto ayuda a los clasificadores lineales
+        a converger mas rapido y tener mejor desempeño.
+        """
         self.vocabulario: Dict[str, int] = {}
         self.idf: np.ndarray = None
         self.n_docs: int = 0
+        self.normalizar = normalizar
 
     def fit(self, documentos_tokenizados: List[List[str]]) -> "TFIDFVectorizer":
         self.n_docs = len(documentos_tokenizados)
@@ -64,6 +71,12 @@ class TFIDFVectorizer:
                     j = self.vocabulario[palabra]
                     tf = freq / total
                     matriz[i, j] = tf * self.idf[j]
+
+        if self.normalizar:
+            normas = np.linalg.norm(matriz, axis=1)
+            normas[normas == 0] = 1e-10  # evita dividir entre ceros si hay un documento vacios
+            matriz = matriz / normas[:, np.newaxis]
+
         return matriz
 
     def fit_transform(self, documentos_tokenizados: List[List[str]]) -> np.ndarray:

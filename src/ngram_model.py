@@ -1,11 +1,11 @@
 """
 ngram_model.py
 --------------
-Modelos de lenguaje estadisticos basados en n-gramas para generar
-versiculos falsos, sin redes neuronales ni modelos preentrenados.
+Clase que permite crear modelos de lenguaje estadísticos basados en n-gramas
+para generar textos de versiculos falsos.
 
-Se implementa una sola clase parametrizada por "n", de forma que
-unigram, bigram, trigram y "n-gram custom" son solo instancias distintas
+Cada instancia de NGramModel implementa un n-grama de tamaño "n". De esta manera
+el unigram, bigram, trigram y "n-gram" son solo instancias distintas
 de NGramModel (n=1, 2, 3, n).
 """
 
@@ -15,25 +15,23 @@ from collections import defaultdict, Counter
 START = "<START>"
 END = "<END>"
 
-
 class NGramModel:
     """
     Clase que representa un modelo de lenguaje basado en n-gramas.
-
-    Attributes:
-        n (int): Tamano del n-grama (1=unigram, 2=bigram, 3=trigram, etc).
+    Atributos:
+        n (int): Tamaño del n-grama.
         contexto_size (int): Cantidad de palabras de contexto usadas para
             predecir la siguiente palabra (n - 1).
         conteos (dict[tuple, Counter]): Para cada contexto (tupla de
             palabras), un contador de cuantas veces aparecio cada palabra
             siguiente en el corpus de entrenamiento.
         vocabulario (set[str]): Conjunto de palabras vistas durante el
-            entrenamiento (sin incluir <START>/<END>).
+            entrenamiento del modelo.
     """
 
     def __init__(self, n):
         """
-        Inicializa el modelo de n-gramas.
+        Instancia la clase
         Args:
             n (int): Tamano del n-grama. Debe ser mayor o igual a 1.
         """
@@ -48,10 +46,9 @@ class NGramModel:
         """
         Entrena el modelo contando ocurrencias de cada n-grama en el corpus.
         Args:
-            oraciones_tokenizadas (list[list[str]]): Lista de versiculos,
-                cada uno representado como lista de tokens (sin <START>/<END>).
+            oraciones_tokenizadas (list[list[str]]): Lista de versiculos tokenizados.
         Returns:
-            NGramModel: La misma instancia, para poder encadenar llamadas.
+            NGramModel: la misma instancia.
         """
         for tokens in oraciones_tokenizadas:
             secuencia = [START] * self.contexto_size + tokens + [END]
@@ -66,10 +63,10 @@ class NGramModel:
         """
         Calcula la probabilidad empirica de que "palabra" siga a "contexto".
         Args:
-            contexto (tuple[str]): Tupla de palabras de contexto (tamano contexto_size).
+            contexto (tuple[str]): Tupla de palabras de contexto (tamaño contexto_size).
             palabra (str): Palabra candidata a continuar la secuencia.
         Returns:
-            float: Probabilidad estimada (frecuencia relativa), entre 0 y 1.
+            float: probabilidad estimada (frecuencia relativa) entre 0 y 1.
         """
         contador = self.conteos.get(contexto)
         if not contador:
@@ -79,7 +76,7 @@ class NGramModel:
 
     def get_siguiente_palabra(self, contexto):
         """
-        Elige la siguiente palabra dado un contexto, muestreando segun
+        Elige la siguiente palabra dado el contexto, muestreando segun
         las frecuencias observadas durante el entrenamiento.
         Args:
             contexto (tuple[str]): Tupla de palabras de contexto.
@@ -99,11 +96,11 @@ class NGramModel:
         Genera una secuencia de palabras a partir del modelo entrenado.
         Args:
             palabra_inicial (str, optional): Palabra desde la que comenzar
-                la generacion. Si es None, se comienza desde el contexto inicial <START>.
-            max_len (int): Cantidad maxima de palabras a generar (la generacion
-                tambien se detiene antes si aparece el token <END>).
+                la generación. Si es None, se comienza desde el contexto inicial <START>.
+            max_len (int): Cantidad maxima de palabras a generar (la generación
+                tambien puede parar antes si aparece el token <END>).
         Returns:
-            str: Texto generado, con las palabras separadas por espacios.
+            str: Texto generado con las palabras separadas por espacios.
         """
         if palabra_inicial:
             if self.contexto_size > 0:
@@ -131,15 +128,15 @@ class NGramModel:
 
 def comparar_modelos(oraciones_tokenizadas, ns=(1, 2, 3, 4), palabra_inicial=None, max_len=20):
     """
-    Entrena un NGramModel por cada valor de n y genera un texto de ejemplo
-    de cada uno, para la comparacion cualitativa pedida en el enunciado.
+    Instancia un NGramModel por cada valor de n y genera un texto con cada uno, 
+    para la hacer una comparación.
     Args:
-        oraciones_tokenizadas (list[list[str]]): Corpus tokenizado (versiculos).
-        ns (tuple[int]): Valores de n a comparar (ej. unigram, bigram, trigram, n custom).
-        palabra_inicial (str, optional): Palabra inicial para todas las generaciones.
-        max_len (int): Largo maximo de cada texto generado.
+        oraciones_tokenizadas (list[list[str]]): versículos tokenizado.
+        ns (tuple[int]): tupla con los valores n a comparar (ej. unigram, bigram, trigram, n-gram).
+        palabra_inicial (str, optional): palabra inicial para todos los textos que se creen.
+        max_len (int): largo maximo de cada texto generado.
     Returns:
-        dict[int, str]: Para cada n, el texto generado por su NGramModel.
+        dict[int, str]: diccionario con el texto generado por cada NGramModel.
     """
     resultados = {}
     for n in ns:

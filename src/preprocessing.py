@@ -82,12 +82,33 @@ class TextPreprocessor:
         tokens = self.filter_stopwords(tokens)
         tokens = self.filter_short_tokens(tokens)
         return tokens
+    
+    def process_ngram(self, text: str) -> List[str]:
+        """Aplica todas las etapas en orden y devuelve la lista de tokens.
+        Para n-grama este caso es diferente, no pueden eliminarse las palabras "puentes".
+        """
+        text = self.to_lowercase(text)
+        text = self.strip_punctuation(text)
+        text = self.strip_special_and_numbers(text)
+        tokens = self.tokenize(text)
+        tokens = self.filter_short_tokens(tokens)
+        return tokens
 
     def process_corpus(self, textos: List[str]) -> List[List[str]]:
         """Procesa una lista de textos y actualiza vocabulario/frecuencias globales."""
         resultado = []
         for texto in textos:
             tokens = self.process(texto)
+            resultado.append(tokens)
+            self.frecuencias.update(tokens)
+        self.vocabulario = {palabra: idx for idx, palabra in enumerate(sorted(self.frecuencias))}
+        return resultado
+    
+    def process_corpus_ngram(self, textos: List[str]) -> List[List[str]]:
+        """Procesa una lista de textos y actualiza vocabulario/frecuencias globales."""
+        resultado = []
+        for texto in textos:
+            tokens = self.process_ngram(texto)
             resultado.append(tokens)
             self.frecuencias.update(tokens)
         self.vocabulario = {palabra: idx for idx, palabra in enumerate(sorted(self.frecuencias))}

@@ -1,40 +1,44 @@
 """
 classifier.py
 --------------
-Clasificador que predice el libro al que pertenece un versiculo, usando
-como features la matriz TF-IDF (implementada a mano en tfidf.py) y como
-modelo un clasificador estandar de sklearn (esto SI esta permitido, la
-restriccion del enunciado es solo sobre TF-IDF y similitud coseno).
+Clase que implementa un clasificador que predice el libro 
+al que pertenece un versiculo, usando elementos como la matriz TF-IDF (implementada
+en tfidf.py) y modelos de clasificación estandares de sklearn.
 """
 
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.svm import LinearSVC
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 
 
 class VerseClassifier:
     """
     Clase que representa un clasificador de versiculos por libro.
+    De momento, se considera el uso de 3 posibles modelos:
+    Logistic Regression, Multinomial Naive Bayes y SVL.
 
-    Attributes:
-        modelo (object): Instancia del modelo de sklearn (LogisticRegression
+    Atributos:
+        modelo (object): instancia del modelo de sklearn (LogisticRegression
             o MultinomialNB) usado internamente.
-        nombre_modelo (str): Nombre del modelo elegido ("logistic" o "naive_bayes").
-        clases (np.ndarray): Lista de libros (etiquetas) vistos durante el entrenamiento.
-        X_test (np.ndarray): Features de prueba, guardadas tras entrenar() para poder evaluar().
-        y_test (pd.Series): Etiquetas reales de prueba, guardadas tras entrenar().
+        nombre_modelo (str): string para elegir modelo ("logistic" o "naive_bayes").
+        clases (np.ndarray): lista de numpy de libros (etiquetas) vistos durante el entrenamiento.
+        X_test (np.ndarray): atributos de prueba guardados tras el entrenamiento para poder evaluar.
+        y_test (pd.Series): etiquetas reales de prueba guardadas tras entrenar().
     """
 
-    def __init__(self, modelo="logistic"):
+    def __init__(self, modelo="logistic", maximo_iteraciones=1000):
         """
-        Inicializa el clasificador segun el tipo de modelo elegido.
+        Crea el clasificador segun el tipo de modelo elegido.
         Args:
             modelo (str): "logistic" para regresion logistica, o "naive_bayes"
                 para Naive Bayes Multinomial (baseline simple y rapido).
         """
         if modelo == "logistic":
-            self.modelo = LogisticRegression(max_iter=1000)
+            self.modelo = LogisticRegression(max_iter=maximo_iteraciones)
+        elif modelo == "linear_svm":
+            self.modelo = LinearSVC(max_iter=maximo_iteraciones)
         elif modelo == "naive_bayes":
             self.modelo = MultinomialNB()
         else:
@@ -47,14 +51,16 @@ class VerseClassifier:
 
     def entrenar(self, X, y, test_size=0.2, random_state=42):
         """
-        Separa los datos en entrenamiento/prueba y entrena el modelo.
+        Segmenta el dataset en train y test por medio de la función
+        train_test_split() de scikit-learn.
+        Luego entrena el modelo.
         Args:
-            X (np.ndarray): Matriz de features (ej. TF-IDF de los versiculos).
-            y (pd.Series): Etiquetas (libro al que pertenece cada versiculo).
-            test_size (float): Proporcion de datos reservados para prueba.
-            random_state (int): Semilla para la separacion train/test.
+            X (np.ndarray): matriz de atributos (el TF-IDF de los versiculos).
+            y (pd.Series): etiquetas (libro al que pertenece cada versiculo, etiqueta objetivo).
+            test_size (float): proporcion de datos de prueba (por default dejamos 20%).
+            random_state (int): semilla para la separacion (aleatoria) de muestras de train y test .
         Returns:
-            tuple: (X_train, X_test, y_train, y_test) usados internamente.
+            tuple: (X_train, X_test, y_train, y_test).
         """
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=test_size, random_state=random_state, stratify=y
@@ -90,11 +96,11 @@ class VerseClassifier:
 
     def predecir(self, X_nuevo):
         """
-        Predice el libro para nuevas filas de features.
+        Predice el libro para nuevas filas de atributos.
         Args:
-            X_nuevo (np.ndarray): Matriz de features de los versiculos a predecir.
+            X_nuevo (np.ndarray): matriz de atributos de los versiculos a predecir.
         Returns:
-            np.ndarray: Libros predichos para cada fila de X_nuevo.
+            np.ndarray: libros predichos de cada fila de X_nuevo.
         """
         return self.modelo.predict(X_nuevo)
 
