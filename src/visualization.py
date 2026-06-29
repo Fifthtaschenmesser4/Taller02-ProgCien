@@ -1,9 +1,10 @@
 """
 visualization.py
-Funciones para graficar cosas del dataset de versiculos.
-Cada funcion arma un grafico y devuelve la figura.
-Uso numpy, pandas y matplotlib. Solo en el PCA uso sklearn,
-que el taller permite expresamente para esa parte.
+
+Funciones para graficar informacion del dataset de versiculos biblicos.
+
+Cada funcion construye un grafico usando matplotlib y devuelve la figura
+para que pueda mostrarse o guardarse desde el notebook principal.
 """
 
 import numpy as np
@@ -12,7 +13,16 @@ import matplotlib.pyplot as plt
 
 
 def plot_longitud_versiculos(df, columna="texto_original"):
-    # largo de cada versiculo contando cuantas palabras tiene
+    """
+    Grafica la distribucion de longitud de los versiculos en cantidad de palabras.
+
+    Args:
+        df (pd.DataFrame): DataFrame que contiene los versiculos.
+        columna (str): nombre de la columna donde se encuentra el texto original.
+
+    Returns:
+        matplotlib.figure.Figure: figura con el histograma de longitudes.
+    """
     longitudes = [len(str(texto).split()) for texto in df[columna]]
 
     fig, ax = plt.subplots(figsize=(8, 5))
@@ -25,7 +35,15 @@ def plot_longitud_versiculos(df, columna="texto_original"):
 
 
 def plot_versiculos_por_libro(df):
-    # cuento cuantos versiculos hay por libro y ordeno de mayor a menor
+    """
+    Grafica la cantidad de versiculos que tiene cada libro del corpus.
+
+    Args:
+        df (pd.DataFrame): DataFrame con una columna llamada 'libro'.
+
+    Returns:
+        matplotlib.figure.Figure: figura con un grafico de barras por libro.
+    """
     conteo = df.groupby("libro").size().sort_values(ascending=False)
 
     fig, ax = plt.subplots(figsize=(12, 6))
@@ -38,14 +56,21 @@ def plot_versiculos_por_libro(df):
 
 
 def plot_heatmap_similitud_libros(matriz_similitud, nombres_libros):
-    # heatmap NxN con la similitud entre libros
+    """
+    Grafica un mapa de calor con la similitud de coseno entre libros.
+
+    Args:
+        matriz_similitud (np.ndarray): matriz cuadrada con las similitudes entre libros.
+        nombres_libros (list[str]): lista con los nombres de los libros en el mismo orden
+            que la matriz de similitud.
+
+    Returns:
+        matplotlib.figure.Figure: figura con el heatmap de similitud.
+    """
     fig, ax = plt.subplots(figsize=(18, 16))
-    # "Blues": los valores bajos salen blancos y los altos azul oscuro
     imagen = ax.imshow(matriz_similitud, cmap="Blues")
     fig.colorbar(imagen, ax=ax)
 
-    # pongo los nombres de los libros en los dos ejes.
-    # uso letra chica (fontsize) porque son 66 nombres y si no no se leen
     ax.set_xticks(range(len(nombres_libros)))
     ax.set_yticks(range(len(nombres_libros)))
     ax.set_xticklabels(nombres_libros, rotation=90, fontsize=6)
@@ -57,22 +82,29 @@ def plot_heatmap_similitud_libros(matriz_similitud, nombres_libros):
 
 
 def plot_pca_versiculos(matriz_tfidf, etiquetas, titulo="Versiculos proyectados con PCA"):
-    # el taller permite usar sklearn para el PCA
+    """
+    Reduce la matriz TF-IDF a dos componentes principales y grafica los versiculos.
+
+    Args:
+        matriz_tfidf (np.ndarray): matriz TF-IDF de los versiculos.
+        etiquetas (list, np.ndarray o pd.Series): etiquetas usadas para colorear los puntos
+            del grafico, por ejemplo libro, testamento o genero.
+        titulo (str): titulo del grafico.
+
+    Returns:
+        matplotlib.figure.Figure: figura con el grafico de dispersion PCA.
+    """
     from sklearn.decomposition import PCA
 
-    # si la matriz viene sparse la paso a densa, porque el PCA de sklearn no acepta sparse
     if hasattr(matriz_tfidf, "toarray"):
         matriz_tfidf = matriz_tfidf.toarray()
 
-    # reduzco la matriz TF-IDF (muchas dimensiones) a solo 2 para poder graficarla
     pca = PCA(n_components=2)
     componentes = pca.fit_transform(matriz_tfidf)
 
-    # cuanta varianza explica cada componente (para ponerlo en los ejes)
     var_pc1 = pca.explained_variance_ratio_[0] * 100
     var_pc2 = pca.explained_variance_ratio_[1] * 100
 
-    # armo un dataframe para graficar mas comodo
     if hasattr(etiquetas, "values"):
         etiquetas = etiquetas.values
     df_plot = pd.DataFrame({
@@ -82,8 +114,6 @@ def plot_pca_versiculos(matriz_tfidf, etiquetas, titulo="Versiculos proyectados 
     })
 
     fig, ax = plt.subplots(figsize=(10, 8))
-    # hago un scatter por cada etiqueta distinta (libro, testamento, etc),
-    # asi cada grupo queda de un color
     for etiqueta in df_plot["etiqueta"].unique():
         sub = df_plot[df_plot["etiqueta"] == etiqueta]
         ax.scatter(sub["PC1"], sub["PC2"], s=15, alpha=0.5, label=etiqueta)
@@ -92,7 +122,6 @@ def plot_pca_versiculos(matriz_tfidf, etiquetas, titulo="Versiculos proyectados 
     ax.set_xlabel(f"PC1 ({var_pc1:.1f}% var. explicada)")
     ax.set_ylabel(f"PC2 ({var_pc2:.1f}% var. explicada)")
 
-    # si hay muchas etiquetas la leyenda no se entiende, asi que la omito
     if df_plot["etiqueta"].nunique() <= 15:
         ax.legend()
     fig.tight_layout()
@@ -100,7 +129,16 @@ def plot_pca_versiculos(matriz_tfidf, etiquetas, titulo="Versiculos proyectados 
 
 
 def plot_sentimiento_por_libro(df_sentimiento_agregado):
-    # ordeno por sentimiento para que las barras se lean como un ranking
+    """
+    Grafica el sentimiento promedio de cada libro.
+
+    Args:
+        df_sentimiento_agregado (pd.DataFrame): DataFrame agregado por libro,
+            con columnas 'libro' y 'mean'.
+
+    Returns:
+        matplotlib.figure.Figure: figura con un grafico de barras horizontales.
+    """
     df_ord = df_sentimiento_agregado.sort_values("mean")
 
     fig, ax = plt.subplots(figsize=(12, 8))
@@ -112,7 +150,16 @@ def plot_sentimiento_por_libro(df_sentimiento_agregado):
 
 
 def plot_wordcloud(frecuencias, titulo="Palabras mas frecuentes"):
-    # frecuencias es un diccionario {palabra: cantidad}
+    """
+    Genera una nube de palabras a partir de un diccionario de frecuencias.
+
+    Args:
+        frecuencias (dict): diccionario donde la clave es la palabra y el valor es su frecuencia.
+        titulo (str): titulo del grafico.
+
+    Returns:
+        matplotlib.figure.Figure: figura con la nube de palabras.
+    """
     from wordcloud import WordCloud
 
     wc = WordCloud(width=900, height=500, background_color="white")
@@ -126,6 +173,16 @@ def plot_wordcloud(frecuencias, titulo="Palabras mas frecuentes"):
 
 
 def plot_matriz_confusion(cm, clases):
+    """
+    Grafica la matriz de confusion del clasificador de versiculos.
+
+    Args:
+        cm (np.ndarray): matriz de confusion generada durante la evaluacion del modelo.
+        clases (list[str] o np.ndarray): nombres de las clases usadas como etiquetas.
+
+    Returns:
+        matplotlib.figure.Figure: figura con la matriz de confusion.
+    """
     fig, ax = plt.subplots(figsize=(14, 12))
     imagen = ax.imshow(cm, cmap="Blues")
     fig.colorbar(imagen, ax=ax)
