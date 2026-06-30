@@ -57,84 +57,215 @@ python main.py
 
 ```mermaid
 classDiagram
+direction LR
+
+    class main {
+        +main() DataFrame
+    }
+
+    class dataloader {
+        +cargar_dataset(path_bible, path_key, path_genre) DataFrame
+    }
+
+    class visualization {
+        +plot_longitud_versiculos(df, columna) Figure
+        +plot_versiculos_por_libro(df) Figure
+        +plot_heatmap_similitud_libros(matriz_similitud, nombres_libros) Figure
+        +plot_pca_versiculos(matriz_tfidf, etiquetas, titulo) Figure
+        +plot_sentimiento_por_libro(df_sentimiento_agregado) Figure
+        +plot_wordcloud(frecuencias, titulo) Figure
+        +plot_matriz_confusion(cm, clases) Figure
+    }
+
     class Biblia {
         +dict testamentos
-        +from_dataframe(df) Biblia
-        +agregar_versiculo(v, testamento, libro)
+        +__init__()
+        +agregar_versiculo(versiculo, testamento, nombre_libro, genero)
+        +from_dataframe(df, col_libro, col_testamento, col_capitulo, col_versiculo, col_texto, col_genero) Biblia
+        +get_libros() list
+        +get_versiculos() list
+        +get_generos() list
         +to_dataframe() DataFrame
-        +resumen() DataFrame
+        +get_resumen() DataFrame
+        +get_resumen_generos() DataFrame
+        +__str__() str
     }
+
     class Testamento {
         +str nombre
         +dict libros
+        +__init__(nombre)
         +agregar_libro(libro)
+        +get_versiculos() list
+        +get_cantidad_versiculos() int
+        +__str__() str
     }
+
     class Libro {
         +str nombre
         +str testamento
+        +str genero
         +dict capitulos
-        +agregar_versiculo(v)
-        +texto_completo
+        +__init__(nombre, testamento, genero)
+        +set_genero(genero)
+        +get_genero() str
+        +agregar_versiculo(versiculo)
+        +get_versiculos() list
+        +get_cantidad_versiculos() int
+        +get_cantidad_capitulos() int
+        +get_texto_completo() str
+        +__str__() str
     }
+
     class Capitulo {
         +int numero
         +list versiculos
-        +agregar_versiculo(v)
+        +__init__(numero)
+        +agregar_versiculo(versiculo)
+        +get_cantidad_versiculos() int
+        +get_texto_completo() str
+        +__str__() str
     }
+
     class Versiculo {
         +str libro
         +int capitulo
         +int numero
         +str texto_original
         +list texto_procesado
+        +__init__(libro, capitulo, numero, texto_original)
+        +set_texto_procesado(tokens)
+        +get_texto_limpio() str
+        +__str__() str
     }
-    Biblia "1" *-- "2" Testamento
+
+    Biblia "1" *-- "*" Testamento
     Testamento "1" *-- "*" Libro
     Libro "1" *-- "*" Capitulo
     Capitulo "1" *-- "*" Versiculo
 
     class TextPreprocessor {
+        +set stopwords
+        +int min_token_len
+        +bool lowercase
+        +bool remove_punctuation
+        +bool remove_numbers
+        +bool remove_stopwords
+        +dict vocabulario
+        +Counter frecuencias
+        +__init__(stopwords, min_token_len, lowercase, remove_punctuation, remove_numbers, remove_stopwords)
+        +to_lowercase(text) str
+        +strip_punctuation(text) str
+        +strip_special_and_numbers(text) str
+        +tokenize(text) list
+        +filter_stopwords(tokens) list
+        +filter_short_tokens(tokens) list
         +process(text) list
+        +process_ngram(text) list
         +process_corpus(textos) list
-        +palabras_mas_frecuentes(n)
+        +process_corpus_ngram(textos) list
+        +palabras_mas_frecuentes(n) list
     }
 
     class TFIDFVectorizer {
         +dict vocabulario
         +ndarray idf
-        +fit(docs)
-        +transform(docs) ndarray
-        +fit_transform(docs) ndarray
+        +int n_docs
+        +bool normalizar
+        +__init__(normalizar)
+        +fit(documentos_tokenizados) TFIDFVectorizer
+        +transform(documentos_tokenizados) ndarray
+        +fit_transform(documentos_tokenizados) ndarray
+        +vectorizar_texto_nuevo(tokens) ndarray
+    }
+
+    class tfidf {
+        +cosine_similarity(vec_a, vec_b) float
+        +cosine_similarity_matrix(matriz) ndarray
     }
 
     class SemanticSearchEngine {
-        +fit(df_corpus)
+        +TextPreprocessor preprocessor
+        +TFIDFVectorizer vectorizer
+        +ndarray matriz_tfidf
+        +DataFrame df_corpus
+        +__init__(preprocessor, vectorizer)
+        +fit(df_corpus, columna_tokens) SemanticSearchEngine
         +buscar(query, k) DataFrame
-        +buscar_por_indice(idx, k) DataFrame
+        +buscar_por_indice(idx_versiculo, k) DataFrame
+        -_rankear(vector_query, k) DataFrame
     }
-    SemanticSearchEngine --> TFIDFVectorizer
-    SemanticSearchEngine --> TextPreprocessor
 
     class VerseClassifier {
-        +entrenar(X, y)
+        +object modelo
+        +str nombre_modelo
+        +ndarray clases
+        +ndarray X_test
+        +Series y_test
+        +__init__(modelo, maximo_iteraciones)
+        +entrenar(X, y, test_size, random_state) tuple
         +evaluar() dict
-        +predecir(X) ndarray
+        +predecir(X_nuevo) ndarray
+        +__str__() str
     }
 
     class NGramModel {
         +int n
-        +fit(oraciones)
+        +int contexto_size
+        +dict conteos
+        +set vocabulario
+        +__init__(n)
+        +fit(oraciones_tokenizadas) NGramModel
+        +get_probabilidad(contexto, palabra) float
+        +get_siguiente_palabra(contexto) str
         +generar(palabra_inicial, max_len) str
+        +__str__() str
+    }
+
+    class ngram_model {
+        +comparar_modelos(oraciones_tokenizadas, ns, palabra_inicial, max_len) dict
     }
 
     class SentimentAnalyzer {
         <<interface>>
         +score(texto) float
     }
-    class LexiconSentimentAnalyzer
-    class TextBlobSentimentAnalyzer
-    SentimentAnalyzer <|-- TextBlobSentimentAnalyzer
+
+    class TextBlobSentimentAnalyzer {
+        +type text_blob_class
+        +__init__()
+        +score(texto) float
+    }
+
+    class sentiment {
+        +calcular_sentimiento_corpus(df, analyzer, columna_texto) DataFrame
+        +agregar_por_libro(df) DataFrame
+        +agregar_por_capitulo(df) DataFrame
+    }
+
+    main ..> dataloader
+    main ..> Biblia
+    main ..> TextPreprocessor
+    main ..> TFIDFVectorizer
+    main ..> tfidf
+    main ..> visualization
+    main ..> SemanticSearchEngine
+    main ..> VerseClassifier
+    main ..> ngram_model
+    main ..> sentiment
+
+    SemanticSearchEngine --> TextPreprocessor
+    SemanticSearchEngine --> TFIDFVectorizer
+    SemanticSearchEngine ..> tfidf
+
+    VerseClassifier --> TFIDFVectorizer
+    ngram_model ..> NGramModel
+    NGramModel --> TextPreprocessor
+
+    TextBlobSentimentAnalyzer --|> SentimentAnalyzer
+    sentiment ..> SentimentAnalyzer
 ```
+
 
 ## Integrantes
 <table>
