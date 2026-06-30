@@ -15,7 +15,7 @@ from pathlib import Path
 import json
 
 from src.models import Biblia
-from src.data_loader import cargar_dataset
+from src.dataloader import cargar_dataset
 from src.preprocessing import TextPreprocessor
 from src.tfidf import TFIDFVectorizer, cosine_similarity_matrix
 from src.search_engine import SemanticSearchEngine
