@@ -21,7 +21,7 @@ from src.tfidf import TFIDFVectorizer, cosine_similarity_matrix
 from src.search_engine import SemanticSearchEngine
 from src.classifier import VerseClassifier
 from src.ngram_model import comparar_modelos
-from src.sentiment import LexiconSentimentAnalyzer, calcular_sentimiento_corpus, agregar_por_libro
+from src.sentiment import TextBlobSentimentAnalyzer, calcular_sentimiento_corpus, agregar_por_libro
 from src import visualization as viz
 
 
@@ -140,7 +140,7 @@ def main():
         print(f"n={n}: {texto}")
 
     # 9. Análisis de sentimiento (3.7) ------------------------------------------------
-    analizador = LexiconSentimentAnalyzer()
+    analizador = TextBlobSentimentAnalyzer()
     df = calcular_sentimiento_corpus(df, analizador)
     sentimiento_por_libro = agregar_por_libro(df)
     viz.plot_sentimiento_por_libro(sentimiento_por_libro)
