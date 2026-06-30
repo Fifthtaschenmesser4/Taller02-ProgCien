@@ -33,7 +33,7 @@ class VerseClassifier:
         Crea el clasificador segun el tipo de modelo elegido.
         Args:
             modelo (str): "logistic" para regresion logistica, o "naive_bayes"
-                para Naive Bayes Multinomial (baseline simple y rapido).
+                para Naive Bayes Multinomial o 'linear_svm' para Support Vector Machine.
         """
         if modelo == "logistic":
             self.modelo = LogisticRegression(max_iter=maximo_iteraciones)
@@ -42,7 +42,7 @@ class VerseClassifier:
         elif modelo == "naive_bayes":
             self.modelo = MultinomialNB()
         else:
-            raise ValueError("modelo debe ser 'logistic' o 'naive_bayes'")
+            raise ValueError("modelo debe ser 'logistic' o 'naive_bayes' o 'linear_svm'")
 
         self.nombre_modelo = modelo
         self.clases = None
