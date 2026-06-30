@@ -18,8 +18,7 @@ Los datos para este taller fueron extraídos de https://www.kaggle.com/datasets/
 
 ```
 biblical_text_mining/
-├── data/                     
-├── notebooks/            
+├── data/                              
 ├── src/
 │   ├── __init__.py
 │   ├── models.py 
