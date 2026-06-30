@@ -44,7 +44,7 @@ git clone https://github.com/Fifthtaschenmesser4/Taller02-ProgCien
 ```
 2. Entrar en la raíz del proyecto:
 ```bash
-cd Taller01-ProgCient
+cd Taller02-ProgCient
 ```
 3. Descargar los requerimientos con el archivo __requirements.txt__:
 ``` bash
