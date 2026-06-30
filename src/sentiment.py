@@ -31,7 +31,7 @@ class SentimentAnalyzer:
         """
         raise NotImplementedError
 
-class TextBlobSentimentAnalyzer(SentimentAnalyzer):
+class TextBlobSentimentAnalyzer(S):
     """
     Clase que analiza sentimiento de textos, usando TextBlob.
 
